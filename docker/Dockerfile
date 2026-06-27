@@ -36,9 +36,7 @@ WORKDIR /home/appuser
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD python -c "import os,urllib.request,sys; \
-url='http://127.0.0.1:%s/api/v1/health' % os.environ.get('APP_PORT','8000'); \
-sys.exit(0 if urllib.request.urlopen(url, timeout=3).status==200 else 1)"
+    CMD python -c "import os,urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:'+os.environ.get('APP_PORT','8000')+'/api/v1/health',timeout=3).status==200 else 1)"
 
 # Use a shell so APP_HOST/APP_PORT env vars are expanded.
 CMD ["sh", "-c", "uvicorn cart_optimizer.api:app --host ${APP_HOST} --port ${APP_PORT}"]

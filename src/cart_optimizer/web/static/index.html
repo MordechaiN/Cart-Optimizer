@@ -96,7 +96,9 @@ const $ = (id) => document.getElementById(id);
 
 function toCents(v) {
   if (v === "" || v === null || v === undefined) return null;
-  return Math.round(parseFloat(v) * 100);
+  const n = parseFloat(v);
+  if (!Number.isFinite(n)) return null;
+  return Math.round(n * 100);
 }
 function money(cents) {
   const sign = cents < 0 ? "-" : "";

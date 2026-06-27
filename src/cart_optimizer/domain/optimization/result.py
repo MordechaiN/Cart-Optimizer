@@ -10,7 +10,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from cart_optimizer.domain.models import Product
 
@@ -54,6 +54,7 @@ class OrderResult(BaseModel):
         0, description="Total discount applied to this order, in cents."
     )
 
+    @computed_field  # serialized in the API response so clients needn't recompute it
     @property
     def total_cents(self) -> int:
         return self.subtotal_cents + self.shipping_cents - self.discount_cents

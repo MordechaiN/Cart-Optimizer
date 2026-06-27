@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cart-optimizer"
+version = "0.1.0"
+description = "Find the mathematically optimal way to split a shopping cart into multiple orders."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Mordechai Neeman" }]
+keywords = ["optimization", "cart", "cp-sat", "or-tools", "aliexpress"]
+
+# Runtime dependencies. Each is justified in CLAUDE.md (§12). Kept deliberately
+# small: an exact solver, a typed API, and validation.
+dependencies = [
+    "ortools>=9.10",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+    "ruff>=0.4",
+    "mypy>=1.8",
+]
+
+[project.urls]
+Homepage = "https://github.com/mordechain/cart-optimizer"
+Source = "https://github.com/mordechain/cart-optimizer"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cart_optimizer = ["web/static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src"]

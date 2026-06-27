@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cart Optimizer</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --ink:#e2e8f0; --muted:#94a3b8;
+          --accent:#38bdf8; --good:#34d399; --bad:#f87171; --line:#334155; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+         background: var(--bg); color: var(--ink); line-height:1.5; }
+  header { padding: 24px; border-bottom:1px solid var(--line); }
+  h1 { margin:0; font-size:22px; }
+  header p { margin:6px 0 0; color: var(--muted); }
+  main { max-width: 960px; margin: 0 auto; padding: 24px; display:grid; gap:20px; }
+  .card { background: var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:18px; }
+  .card h2 { margin:0 0 12px; font-size:16px; }
+  table { width:100%; border-collapse: collapse; }
+  th, td { text-align:left; padding:6px 8px; font-size:14px; }
+  th { color: var(--muted); font-weight:600; }
+  input, select { width:100%; padding:7px 8px; background:#0b1220; color:var(--ink);
+          border:1px solid var(--line); border-radius:8px; font-size:14px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .grid label { font-size:13px; color:var(--muted); display:block; }
+  button { cursor:pointer; border:none; border-radius:8px; padding:9px 14px;
+          font-size:14px; font-weight:600; }
+  .btn-add { background:#0b1220; color:var(--accent); border:1px solid var(--line); }
+  .btn-del { background:transparent; color:var(--bad); padding:4px 8px; }
+  .btn-go { background: var(--accent); color:#04222e; font-size:16px; padding:12px 20px; }
+  .row-actions { white-space:nowrap; }
+  .status { font-weight:700; padding:2px 10px; border-radius:999px; font-size:13px; }
+  .PROVEN_OPTIMAL { background: rgba(52,211,153,.15); color: var(--good); }
+  .UNPROVEN { background: rgba(251,191,36,.15); color:#fbbf24; }
+  .INFEASIBLE { background: rgba(248,113,113,.15); color: var(--bad); }
+  .order { border:1px solid var(--line); border-radius:10px; padding:12px; margin-top:10px; }
+  .order h3 { margin:0 0 6px; font-size:15px; }
+  .muted { color: var(--muted); }
+  .totals { display:flex; flex-wrap:wrap; gap:18px; margin-top:10px; font-size:15px; }
+  .totals b { color: var(--accent); }
+  ul.explain { margin:8px 0 0; padding-left:18px; }
+  ul.explain li { margin:4px 0; }
+  .hint { font-size:12px; color:var(--muted); margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛒 Cart Optimizer</h1>
+  <p>Find the mathematically optimal way to split your order. Enter your items
+     and coupons, then optimize. Money is in your chosen currency.</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Settings</h2>
+    <div class="grid">
+      <div><label>Currency</label><input id="currency" value="USD" /></div>
+      <div><label>Customs cap per order (blank = none)</label><input id="cap" type="number" step="0.01" min="0" placeholder="e.g. 75" /></div>
+      <div><label>Flat shipping per order</label><input id="ship" type="number" step="0.01" min="0" value="0" /></div>
+      <div><label>Free shipping at (blank = none)</label><input id="freeship" type="number" step="0.01" min="0" /></div>
+    </div>
+    <p class="hint">The customs cap forces each order to stay at or below a value
+       (useful for import limits). Leave fields blank to ignore them.</p>
+  </section>
+
+  <section class="card">
+    <h2>Products</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Store</th><th>Unit price</th><th>Qty</th><th>Owner</th><th></th></tr></thead>
+      <tbody id="products"></tbody>
+    </table>
+    <p><button class="btn-add" onclick="addProduct()">+ Add product</button></p>
+  </section>
+
+  <section class="card">
+    <h2>Coupons</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Scope</th><th>Store (if store-scoped)</th><th>Spend at least</th><th>Discount</th><th></th></tr></thead>
+      <tbody id="coupons"></tbody>
+    </table>
+    <p><button class="btn-add" onclick="addCoupon()">+ Add coupon</button></p>
+  </section>
+
+  <p><button class="btn-go" onclick="optimize()">⚡ Optimize</button>
+     <span id="busy" class="muted"></span></p>
+
+  <section class="card" id="resultCard" style="display:none">
+    <h2>Result <span id="status" class="status"></span></h2>
+    <div id="result"></div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+function toCents(v) {
+  if (v === "" || v === null || v === undefined) return null;
+  return Math.round(parseFloat(v) * 100);
+}
+function money(cents) {
+  const sign = cents < 0 ? "-" : "";
+  const a = Math.abs(cents);
+  return sign + Math.floor(a / 100) + "." + String(a % 100).padStart(2, "0");
+}
+
+function addProduct(p = {}) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input class="p-name" value="${p.name || ""}" /></td>
+    <td><input class="p-store" value="${p.store || ""}" /></td>
+    <td><input class="p-price" type="number" step="0.01" min="0" value="${p.price ?? ""}" /></td>
+    <td><input class="p-qty" type="number" step="1" min="1" value="${p.qty ?? 1}" /></td>
+    <td><input class="p-owner" value="${p.owner || ""}" /></td>
+    <td class="row-actions"><button class="btn-del" onclick="this.closest('tr').remove()">✕</button></td>`;
+  $("products").appendChild(tr);
+}
+
+function addCoupon(c = {}) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input class="c-name" value="${c.name || ""}" /></td>
+    <td><select class="c-scope">
+          <option value="order"${c.scope==="order"?" selected":""}>order</option>
+          <option value="store"${c.scope==="store"?" selected":""}>store</option>
+        </select></td>
+    <td><input class="c-store" value="${c.store || ""}" /></td>
+    <td><input class="c-threshold" type="number" step="0.01" min="0" value="${c.threshold ?? ""}" /></td>
+    <td><input class="c-discount" type="number" step="0.01" min="0" value="${c.discount ?? ""}" /></td>
+    <td class="row-actions"><button class="btn-del" onclick="this.closest('tr').remove()">✕</button></td>`;
+  $("coupons").appendChild(tr);
+}
+
+function collect() {
+  const products = [...$("products").querySelectorAll("tr")].map((tr) => ({
+    name: tr.querySelector(".p-name").value.trim(),
+    store: tr.querySelector(".p-store").value.trim(),
+    unit_price_cents: toCents(tr.querySelector(".p-price").value) ?? 0,
+    quantity: parseInt(tr.querySelector(".p-qty").value || "1", 10),
+    owner: tr.querySelector(".p-owner").value.trim() || null,
+  })).filter((p) => p.name);
+
+  const coupons = [...$("coupons").querySelectorAll("tr")].map((tr) => {
+    const scope = tr.querySelector(".c-scope").value;
+    const store = tr.querySelector(".c-store").value.trim();
+    return {
+      name: tr.querySelector(".c-name").value.trim(),
+      scope,
+      store: scope === "store" ? store : null,
+      threshold_cents: toCents(tr.querySelector(".c-threshold").value) ?? 0,
+      discount_cents: toCents(tr.querySelector(".c-discount").value) ?? 0,
+    };
+  }).filter((c) => c.name);
+
+  const settings = {
+    currency: $("currency").value.trim() || "USD",
+    max_order_value_cents: toCents($("cap").value),
+    shipping_flat_cents: toCents($("ship").value) ?? 0,
+    free_shipping_threshold_cents: toCents($("freeship").value),
+  };
+  return { products, coupons, users: [], settings };
+}
+
+async function optimize() {
+  const payload = collect();
+  if (!payload.products.length) { alert("Add at least one product."); return; }
+  $("busy").textContent = "Solving…";
+  $("resultCard").style.display = "none";
+  try {
+    const res = await fetch("/api/v1/optimize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    $("busy").textContent = "";
+    if (!res.ok) { renderError(data); return; }
+    render(data);
+  } catch (e) {
+    $("busy").textContent = "";
+    alert("Request failed: " + e);
+  }
+}
+
+function renderError(data) {
+  $("resultCard").style.display = "block";
+  $("status").textContent = "ERROR";
+  $("status").className = "status INFEASIBLE";
+  $("result").innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
+}
+
+function render(r) {
+  $("resultCard").style.display = "block";
+  const st = $("status");
+  st.textContent = r.status.replace(/_/g, " ");
+  st.className = "status " + r.status;
+
+  let html = "";
+  (r.orders || []).forEach((o) => {
+    html += `<div class="order"><h3>Order ${o.index} — pay ${money(o.total_cents)} ${r.currency}</h3>`;
+    html += `<div class="muted">${o.products.map((p) => p.name + (p.quantity>1?` ×${p.quantity}`:"")).join(", ")}</div>`;
+    html += `<div class="muted">subtotal ${money(o.subtotal_cents)}`;
+    if (o.shipping_cents) html += ` · shipping ${money(o.shipping_cents)}`;
+    if (o.discount_cents) html += ` · discount −${money(o.discount_cents)}`;
+    html += `</div>`;
+    o.applied_coupons.forEach((c) => {
+      html += `<div class="muted">🏷️ ${c.name}: −${money(c.discount_cents)} (needed ${money(c.threshold_cents)}, had ${money(c.qualifying_cents)})</div>`;
+    });
+    html += `</div>`;
+  });
+
+  if (r.orders && r.orders.length) {
+    html += `<div class="totals">
+      <span>Subtotal <b>${money(r.subtotal_cents)}</b></span>
+      <span>Shipping <b>${money(r.shipping_cents)}</b></span>
+      <span>Discounts <b>−${money(r.discount_cents)}</b></span>
+      <span>Total <b>${money(r.total_cents)} ${r.currency}</b></span>`;
+    if (r.savings_vs_baseline_cents != null && r.savings_vs_baseline_cents > 0)
+      html += `<span>You save <b>${money(r.savings_vs_baseline_cents)}</b> vs. one order</span>`;
+    html += `</div>`;
+  }
+
+  if (r.explanation && r.explanation.length) {
+    html += "<ul class='explain'>" + r.explanation.map((e) => `<li>${e}</li>`).join("") + "</ul>";
+  }
+  $("result").innerHTML = html;
+}
+
+// Seed with a small example so first-time users see how it works.
+addProduct({ name: "Phone case", store: "StoreA", price: 12.50, qty: 1 });
+addProduct({ name: "Cable", store: "StoreA", price: 9.00, qty: 2 });
+addProduct({ name: "Headphones", store: "StoreB", price: 45.00, qty: 1 });
+addCoupon({ name: "$5 off $50", scope: "order", threshold: 50, discount: 5 });
+</script>
+</body>
+</html>

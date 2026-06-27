@@ -36,6 +36,12 @@ and recreates the container. No manual Docker commands are needed. You can also
 enable Portainer **automatic updates** (polling or webhook) to skip the manual
 redeploy click.
 
+> The image is **not published to any registry**. The compose service has no
+> `image:` tag and sets `pull_policy: build`, so Compose/Portainer always builds
+> it locally and never tries (and fails) to pull it from a registry. If you tick
+> Portainer's "Pull latest image versions" option, that's fine — there is
+> nothing to pull, and the local build still runs.
+
 ## Alternative: plain Docker Compose
 
 From the repository root on the host:

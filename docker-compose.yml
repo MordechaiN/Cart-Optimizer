@@ -8,6 +8,10 @@
 # build context, so a plain "Pull and redeploy" in Portainer rebuilds and
 # restarts the app with no manual Docker commands.
 #
+# IMPORTANT: there is intentionally no `image:` tag and `pull_policy: build` is
+# set, so Compose (and Portainer) ALWAYS builds locally and NEVER tries to pull
+# this image from a registry — it is not published anywhere.
+#
 # See the README section "Deployment with Portainer".
 
 services:
@@ -15,7 +19,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    image: cart-optimizer:latest
+    # Always build from the Dockerfile; never attempt a registry pull.
+    pull_policy: build
     container_name: cart-optimizer
     ports:
       # Publish on APP_PORT (default 8000). In Portainer, set APP_PORT in the

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Portainer "Pull and redeploy" no longer fails trying to pull a non-existent
+  image.** The compose service dropped its `image: cart-optimizer:latest` tag and
+  now sets `pull_policy: build`, so Compose/Portainer always builds the image
+  locally from `docker/Dockerfile` and never attempts a registry pull.
+
 ## [0.2.0] - 2026-06-27
 
 A complete frontend redesign and the Portainer deployment restructure.

@@ -36,8 +36,15 @@ Source = "https://github.com/mordechain/cart-optimizer"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# Bundle every web asset (HTML/CSS/JS/templates), including any future
+# subdirectories, into the wheel so the runtime image is self-contained.
 [tool.setuptools.package-data]
-cart_optimizer = ["web/static/*"]
+cart_optimizer = [
+    "web/static/*",
+    "web/static/**/*",
+    "web/templates/*",
+    "web/templates/**/*",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

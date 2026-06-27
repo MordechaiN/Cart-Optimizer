@@ -20,6 +20,11 @@ RUN pip install --upgrade pip && pip install .
 # ---- Runtime stage: minimal, non-root, self-contained (offline) ----
 FROM python:3.11-slim AS runtime
 
+LABEL org.opencontainers.image.title="Cart Optimizer" \
+      org.opencontainers.image.description="Provably optimal splitting of shopping carts into orders." \
+      org.opencontainers.image.source="https://github.com/mordechain/cart-optimizer" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \

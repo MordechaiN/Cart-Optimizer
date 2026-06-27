@@ -1,0 +1,34 @@
+# Cart Optimizer — primary deployment file.
+#
+# This Compose file lives at the repository root so the repository can be
+# deployed directly as a Portainer Stack from Git (Stacks -> Add stack ->
+# Repository), with the compose path left at its default "docker-compose.yml".
+#
+# It builds the image from docker/Dockerfile using the repository root as the
+# build context, so a plain "Pull and redeploy" in Portainer rebuilds and
+# restarts the app with no manual Docker commands.
+#
+# See the README section "Deployment with Portainer".
+
+services:
+  cart-optimizer:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: cart-optimizer:latest
+    container_name: cart-optimizer
+    ports:
+      # Publish on APP_PORT (default 8000). In Portainer, set APP_PORT in the
+      # stack's environment variables to change the host port.
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+    restart: unless-stopped
+    # Hardening: read-only root filesystem with a small in-memory /tmp, a
+    # non-root user (set in the image), and no privilege escalation.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true

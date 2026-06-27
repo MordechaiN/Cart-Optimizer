@@ -16,15 +16,18 @@ cart, and explains the result in plain language.
 
 ---
 
-## What it can do today (v0)
+## What it can do today
 
-- Enter your **products** (name, price, store, quantity, and who they're for).
-- Enter your **coupons** (e.g. "$5 off when you spend $50", or a store-specific
-  deal).
-- Set **basic rules**: a customs cap per order, flat shipping, and a
+- A clean, **guided step-by-step interface** — add products and coupons,
+  duplicate or toggle items, and review before optimizing.
+- Enter your **coupons** in plain language (whole-order or store-specific).
+- Set **basic rules**: a customs limit per order, flat shipping, and a
   free-shipping threshold.
-- Get the **provably optimal split** into orders — with a clear explanation of
-  *why* it split things the way it did and how much you saved.
+- Get the **provably optimal split** into orders, with a results page that shows
+  what you pay, how much you saved, every order, the coupons used, and *why* this
+  is the best plan.
+- **English and Hebrew** with full right-to-left layout, **light/dark** themes,
+  and your work auto-saved in the browser.
 
 It runs entirely on your own machine. Nothing is sent to the internet, and there
 are no accounts or logins.
@@ -51,17 +54,30 @@ To stop it, press `Ctrl+C` (or run `docker compose down`).
 
 ## How to use it
 
-1. Open http://localhost:8000.
-2. Fill in your **Settings** (currency, and optionally a customs cap, shipping,
-   or free-shipping threshold). Leave fields blank to ignore them.
-3. Add your **Products**.
-4. Add any **Coupons** you have.
-5. Click **⚡ Optimize**.
+The app guides you through a few simple steps — no manual required:
 
-You'll see the recommended orders, what to pay for each, the coupons used, your
-total savings, and a short explanation. A green **PROVEN OPTIMAL** badge means
-the answer is mathematically the best possible. (If a problem is ever too large
-to prove in time, it says so honestly instead of guessing.)
+1. **Settings** — pick your currency and, optionally, a customs limit, shipping
+   fee, or free-shipping threshold. Anything optional can be left blank.
+2. **Products** — add the items in your cart (name, store, price, quantity). You
+   can duplicate a row, or toggle an item out of the calculation without
+   deleting it.
+3. **Coupons** — add any discounts in plain language ("applies to the whole
+   order" or "a specific store"). Coupons are optional.
+4. **Review** — a quick summary of your cart.
+5. **Optimize** — and you're done.
+
+The **Results** page shows what you'll pay, how much you saved, each order to
+place, which coupons were used where, and a plain-language explanation of *why*
+this is the best plan. A green **Proven optimal** badge means it's mathematically
+the cheapest legal option. (If a problem is ever too large to prove in time, it
+says so honestly instead of guessing.)
+
+**Languages & theme.** Switch between **English** and **Hebrew** (with full
+right-to-left layout) from the language button in the top bar, and toggle
+light/dark mode next to it. Your entries are saved in your browser, so a refresh
+won't lose your work.
+
+See the [user guide](docs/user-guide.md) for a walkthrough.
 
 ---
 

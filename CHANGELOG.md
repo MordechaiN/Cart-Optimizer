@@ -7,19 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-27
+
+A complete frontend redesign and the Portainer deployment restructure.
+
+### Added
+- **Redesigned Web UI**: a guided, multi-step wizard (Settings → Products →
+  Coupons → Review → Results) replacing the single form. Dark-first design with a
+  light theme toggle, responsive and touch-friendly layout, SVG icons, visible
+  keyboard focus, and `prefers-reduced-motion` support.
+- **Product management**: add, edit, duplicate, delete, and an include/exclude
+  toggle to leave an item out of a calculation without deleting it; store
+  autocomplete keeps store names consistent for store coupons.
+- **Plain-language coupons**: "whole order" vs "a specific store", with inline
+  hints instead of technical fields.
+- **Results page**: headline what-you-pay / before-discounts / you-save figures,
+  a per-order breakdown with coupon usage, and a localized "why this plan"
+  explanation composed on the client.
+- **Internationalization (i18n)**: English and Hebrew, switchable in-app, with
+  full right-to-left layout for Hebrew via CSS logical properties. One shared
+  translation source — no duplicated, language-specific code. Currency/number
+  formatting via `Intl.NumberFormat`.
+- **Browser persistence**: wizard state is saved to `localStorage`, so a refresh
+  never loses a half-entered cart. Clear-all and load-example helpers.
+- ADR-0006 recording the buildless, framework-free frontend architecture.
+- Dedicated **"Deployment with Portainer"** section in the README and an updated
+  deployment guide.
+- OCI image labels (title, description, source, license) on the runtime image.
+
 ### Changed
 - **Deployment restructured for Portainer.** The primary `docker-compose.yml`
   now lives at the repository root and builds from the root context
   (`docker/Dockerfile`), so the repository deploys directly as a Portainer Stack
   from Git with a "Pull and redeploy" workflow — no manual Docker commands. The
   old `docker/docker-compose.yml` was removed.
-
-### Added
-- Dedicated **"Deployment with Portainer"** section in the README and an updated
-  deployment guide.
-- OCI image labels (title, description, source, license) on the runtime image.
+- The Web UI is now split into maintainable `index.html` / `styles.css` /
+  `i18n.js` / `app.js` files (still buildless, no framework, served as static
+  assets).
 
 ### Fixed
+- `OrderResult.total_cents` is now serialized in the API response (it was a plain
+  property and silently omitted), so per-order totals are available to clients.
+  Backward-compatible (additive) and covered by a regression test.
 - Packaging now bundles **all** web assets under `cart_optimizer/web/`
   (including any future CSS/JS/template subdirectories), guaranteeing the runtime
   image is self-contained. Verified by installing the built package and serving
@@ -65,5 +94,6 @@ optimal way to split a shopping cart into multiple orders.
 - The container runs read-only with an in-memory `/tmp`, as a non-root user, and
   with `no-new-privileges`.
 
-[Unreleased]: https://github.com/mordechain/cart-optimizer/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/mordechain/cart-optimizer/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/mordechain/cart-optimizer/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mordechain/cart-optimizer/releases/tag/v0.1.0

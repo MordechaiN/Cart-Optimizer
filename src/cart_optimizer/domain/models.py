@@ -15,6 +15,17 @@ from pydantic import BaseModel, Field, model_validator
 
 CouponScope = Literal["order", "store"]
 
+# Sane upper bounds for a manual-entry cart. They keep request payloads and the
+# resulting solver model small enough to stay fast and well within 64-bit integer
+# range, and they fail closed against accidental or malicious oversized input.
+MAX_PRODUCTS = 200
+MAX_COUPONS = 100
+MAX_USERS = 100
+MAX_QUANTITY = 10_000
+MAX_AMOUNT_CENTS = 100_000_000  # 1,000,000.00 in major units
+MAX_THRESHOLD_CENTS = 100_000_000_000  # generous cap/threshold ceiling
+MAX_SOLVER_SECONDS = 60.0
+
 
 class Product(BaseModel):
     """A single line in the cart.
@@ -23,12 +34,19 @@ class Product(BaseModel):
     together and always end up in the same order (we do not split a line).
     """
 
-    name: str = Field(..., min_length=1, description="Human-readable product name.")
-    unit_price_cents: int = Field(..., ge=0, description="Price per unit, in cents.")
-    quantity: int = Field(1, ge=1, description="Number of units.")
-    store: str = Field("", description="Seller/store identifier. Empty = unspecified.")
+    name: str = Field(
+        ..., min_length=1, max_length=200, description="Human-readable product name."
+    )
+    unit_price_cents: int = Field(
+        ..., ge=0, le=MAX_AMOUNT_CENTS, description="Price per unit, in cents."
+    )
+    quantity: int = Field(1, ge=1, le=MAX_QUANTITY, description="Number of units.")
+    store: str = Field(
+        "", max_length=200, description="Seller/store identifier. Empty = unspecified."
+    )
     owner: Optional[str] = Field(
-        None, description="Which user this product belongs to (group orders)."
+        None, max_length=200,
+        description="Which user this product belongs to (group orders).",
     )
 
     @property
@@ -48,16 +66,21 @@ class Coupon(BaseModel):
     (if any) maximises the total saving.
     """
 
-    name: str = Field(..., min_length=1, description="Human-readable coupon name.")
+    name: str = Field(
+        ..., min_length=1, max_length=200, description="Human-readable coupon name."
+    )
     scope: CouponScope = Field("order", description="'order' or 'store'.")
     store: Optional[str] = Field(
-        None, description="Required when scope='store': which store it applies to."
+        None, max_length=200,
+        description="Required when scope='store': which store it applies to.",
     )
     threshold_cents: int = Field(
-        ..., ge=0, description="Minimum qualifying spend to use the coupon, in cents."
+        ..., ge=0, le=MAX_THRESHOLD_CENTS,
+        description="Minimum qualifying spend to use the coupon, in cents.",
     )
     discount_cents: int = Field(
-        ..., ge=1, description="Amount subtracted when the coupon is applied, in cents."
+        ..., ge=1, le=MAX_AMOUNT_CENTS,
+        description="Amount subtracted when the coupon is applied, in cents.",
     )
 
     @model_validator(mode="after")
@@ -70,26 +93,32 @@ class Coupon(BaseModel):
 class Settings(BaseModel):
     """Optimization settings (the 'basic settings' for v0)."""
 
-    currency: str = Field("USD", min_length=1, description="ISO currency code.")
+    currency: str = Field(
+        "USD", min_length=1, max_length=8, description="ISO currency code."
+    )
     max_order_value_cents: Optional[int] = Field(
         None,
         ge=1,
+        le=MAX_THRESHOLD_CENTS,
         description=(
             "Customs / de-minimis cap: no single order may exceed this subtotal. "
             "None disables the cap."
         ),
     )
     shipping_flat_cents: int = Field(
-        0, ge=0, description="Flat shipping cost charged per non-empty order."
+        0, ge=0, le=MAX_AMOUNT_CENTS,
+        description="Flat shipping cost charged per non-empty order.",
     )
     free_shipping_threshold_cents: Optional[int] = Field(
         None,
         ge=0,
+        le=MAX_THRESHOLD_CENTS,
         description="An order at or above this subtotal ships free. None disables.",
     )
     max_orders: Optional[int] = Field(
         None,
         ge=1,
+        le=MAX_PRODUCTS,
         description=(
             "Upper bound on the number of orders. None lets the engine use as many "
             "as there are products (never more is ever needed)."
@@ -98,6 +127,7 @@ class Settings(BaseModel):
     solver_time_limit_seconds: float = Field(
         10.0,
         gt=0,
+        le=MAX_SOLVER_SECONDS,
         description="Wall-clock budget for the solver before it reports UNPROVEN.",
     )
 
@@ -105,10 +135,11 @@ class Settings(BaseModel):
 class OptimizationRequest(BaseModel):
     """A complete optimization problem: the cart plus its rules and settings."""
 
-    products: list[Product] = Field(..., min_length=1)
-    coupons: list[Coupon] = Field(default_factory=list)
+    products: list[Product] = Field(..., min_length=1, max_length=MAX_PRODUCTS)
+    coupons: list[Coupon] = Field(default_factory=list, max_length=MAX_COUPONS)
     users: list[str] = Field(
         default_factory=list,
+        max_length=MAX_USERS,
         description="Known user names (for group orders). Informational in v0.",
     )
     settings: Settings = Field(default_factory=Settings)

@@ -53,6 +53,16 @@ def test_optimize_rejects_store_coupon_without_matching_product():
     assert response.status_code == 422
 
 
+def test_optimize_rejects_oversized_cart():
+    payload = {
+        "products": [
+            {"name": f"P{i}", "unit_price_cents": 100} for i in range(201)
+        ]
+    }
+    response = client.post("/api/v1/optimize", json=payload)
+    assert response.status_code == 422
+
+
 def test_index_served():
     response = client.get("/")
     assert response.status_code == 200

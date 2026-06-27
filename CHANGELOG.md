@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-27
+
+Reworked the user experience from a multi-step wizard into a single-page
+"dashboard", keeping the exact visual design, i18n/RTL, accessibility and theming.
+
+### Changed
+- **The UI is now a single-page dashboard instead of a wizard.** Everything is
+  visible on one scrollable board: a collapsible Settings card, a large Products
+  section, a Coupons list, a Live summary, and Results rendered in place. No
+  steps, no navigation. (See ADR-0007.)
+- **Products are a fast, inline-editable table.** Compact rows with column
+  headers, store autocomplete, per-row duplicate / delete / include toggle, and
+  keyboard flow — **Enter** adds the next product, **Arrow Up/Down** moves
+  between rows — so entering many products stays comfortable.
+- **Coupons are just another list** on the same page (no separate screen).
+- Results now appear **below the inputs**; edit anything and press **Optimize
+  again** to recompute in place.
+
+### Added
+- An always-visible **sticky Optimize bar** with live figures (estimated
+  subtotal, product and coupon counts).
+- A **Live summary** card that updates as you type (products, optional/excluded,
+  people, coupons, estimated subtotal and shipping).
+- ADR-0007 documenting the dashboard UX (revising the wizard from ADR-0006).
+
 ### Fixed
 - **Portainer "Pull and redeploy" no longer fails trying to pull a non-existent
   image.** The compose service dropped its `image: cart-optimizer:latest` tag and
@@ -100,6 +125,7 @@ optimal way to split a shopping cart into multiple orders.
 - The container runs read-only with an in-memory `/tmp`, as a non-root user, and
   with `no-new-privileges`.
 
-[Unreleased]: https://github.com/mordechain/cart-optimizer/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/mordechain/cart-optimizer/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/mordechain/cart-optimizer/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/mordechain/cart-optimizer/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mordechain/cart-optimizer/releases/tag/v0.1.0

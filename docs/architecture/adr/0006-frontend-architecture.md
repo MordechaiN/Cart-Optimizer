@@ -1,7 +1,11 @@
 # ADR-0006: Frontend architecture — buildless vanilla SPA with i18n & RTL
 
-- Status: Accepted
+- Status: Accepted (the wizard navigation model is revised by ADR-0007)
 - Date: 2026-06-27
+
+> Note: the buildless architecture, i18n/RTL, accessibility, and theming here
+> still stand. The multi-step **wizard** flow was later replaced by a
+> single-page dashboard — see [ADR-0007](0007-single-page-dashboard-ux.md).
 
 ## Context
 

@@ -116,6 +116,16 @@
       "why.cap": "Orders are kept under your {cap} customs limit.",
       "why.savings": "You save {amount} versus one combined order.",
       "why.alreadyOptimal": "A single combined order is already the cheapest option.",
+
+      "summary.heading": "Live summary",
+      "summary.subtotal": "Estimated subtotal",
+      "summary.shipping": "Estimated shipping",
+      "summary.optionalOff": "Optional (off)",
+      "summary.people": "People",
+      "optimize.again": "Optimize again",
+      "products.enterHint": "Tip: press Enter to add the next product.",
+      "results.heading": "Results",
+
       "common.optional": "optional",
 
       "action.back": "Back",
@@ -239,6 +249,16 @@
       "why.cap": "ההזמנות נשמרות מתחת למגבלת המכס {cap}.",
       "why.savings": "אתה חוסך {amount} בהשוואה להזמנה אחת משולבת.",
       "why.alreadyOptimal": "הזמנה אחת משולבת היא כבר האפשרות הזולה ביותר.",
+
+      "summary.heading": "סיכום חי",
+      "summary.subtotal": "סכום ביניים משוער",
+      "summary.shipping": "משלוח משוער",
+      "summary.optionalOff": "אופציונליים (כבויים)",
+      "summary.people": "אנשים",
+      "optimize.again": "אופטימיזציה מחדש",
+      "products.enterHint": "טיפ: לחץ Enter כדי להוסיף את המוצר הבא.",
+      "results.heading": "תוצאות",
+
       "common.optional": "אופציונלי",
 
       "action.back": "חזרה",

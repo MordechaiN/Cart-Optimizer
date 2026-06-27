@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cart-optimizer"
-version = "0.2.0"
+version = "0.3.0"
 description = "Find the mathematically optimal way to split a shopping cart into multiple orders."
 readme = "README.md"
 requires-python = ">=3.11"

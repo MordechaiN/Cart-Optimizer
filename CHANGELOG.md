@@ -14,9 +14,11 @@ optimal way to split a shopping cart into multiple orders.
 
 ### Added
 - **Exact optimization engine** using OR-Tools CP-SAT. Splits a cart into orders
-  to minimise shipping minus discounts, respecting an optional per-order customs
-  cap, and proves global optimality. Among equally-priced solutions it prefers
-  the fewest orders.
+  to minimise the total actually paid — `max(0, subtotal + shipping - discounts)`
+  per order, so a coupon never pushes an order below zero — respecting an
+  optional per-order customs cap, and proves global optimality. Among
+  equally-priced solutions it prefers the fewest orders, and results are
+  reproducible run-to-run.
 - **Canonical, platform-agnostic data model**: products, coupons (order- and
   store-scoped), users (as product owners), and settings. All money is integer
   cents for exact arithmetic.
@@ -36,6 +38,14 @@ optimal way to split a shopping cart into multiple orders.
 ### Changed
 - Project license changed from MIT to **Apache-2.0**, with a `NOTICE` file for
   attribution (see ADR-0004).
+
+### Security
+- Input is bounded at the API boundary (max products/coupons/users, per-amount
+  and quantity caps, and a solver time-limit ceiling) to fail closed against
+  oversized or malicious requests and to keep the solver model within safe
+  integer range. Limits are documented in `docs/configuration.md`.
+- The container runs read-only with an in-memory `/tmp`, as a non-root user, and
+  with `no-new-privileges`.
 
 [Unreleased]: https://github.com/mordechain/cart-optimizer/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/mordechain/cart-optimizer/releases/tag/v0.1.0

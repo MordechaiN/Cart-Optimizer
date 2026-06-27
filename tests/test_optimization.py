@@ -141,6 +141,37 @@ def test_free_shipping_threshold():
     assert result.total_cents == 6000
 
 
+def test_no_minimum_coupon_applies_to_a_real_order():
+    # A "no minimum" coupon (threshold 0) must attach to an actual order and be
+    # reflected in the result, not float off onto an empty order.
+    result = optimize(
+        _req(
+            [Product(name="A", unit_price_cents=1000)],
+            [Coupon(name="$5 off, no minimum", threshold_cents=0, discount_cents=500)],
+        )
+    )
+    assert result.status is OptimizationStatus.PROVEN_OPTIMAL
+    assert len(result.orders) == 1
+    assert result.orders[0].applied_coupons  # the coupon is attributed to the order
+    assert result.discount_cents == 500
+    assert result.total_cents == 500
+
+
+def test_discount_never_makes_total_negative():
+    # Discount exceeds the order value: you pay 0, never a negative amount, and
+    # the reported discount is capped at the order value.
+    result = optimize(
+        _req(
+            [Product(name="Cheap", unit_price_cents=200)],
+            [Coupon(name="$5 off, no minimum", threshold_cents=0, discount_cents=500)],
+        )
+    )
+    assert result.status is OptimizationStatus.PROVEN_OPTIMAL
+    assert result.total_cents == 0
+    assert result.discount_cents == 200
+    assert all(o.total_cents >= 0 for o in result.orders)
+
+
 def test_user_shares_reported():
     result = optimize(
         _req([Product(name="A", unit_price_cents=1000, owner="alice"),

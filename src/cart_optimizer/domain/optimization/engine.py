@@ -33,10 +33,11 @@ Constraints
 
 Objective
 ---------
-Minimise ``sum(shipping) - sum(discounts)`` in integer cents. CP-SAT proves
-global optimality. Among equally-priced solutions we prefer the one with the
-**fewest orders** via a strictly-secondary (lexicographic) term, so the engine
-never splits more than the cost actually requires.
+Minimise the **total actually paid**, in integer cents. Per order this is
+``max(0, subtotal + shipping - discounts)`` — a coupon never reduces an order
+below zero. CP-SAT proves global optimality. Among equally-priced solutions we
+prefer the one with the **fewest orders** via a strictly-secondary
+(lexicographic) term, so the engine never splits more than the cost requires.
 
 Complexity
 ----------
@@ -118,24 +119,28 @@ def optimize(request: OptimizationRequest) -> OptimizationResult:
         for o in range(num_orders):
             model.Add(subtotal[o] <= settings.max_order_value_cents)
 
-    # Coupons.
+    # Coupons. A coupon may be applied to at most one order, only if that order
+    # is non-empty (so the discount is always tied to a real order) and the
+    # qualifying spend reaches the threshold.
     use: dict[tuple[int, int], cp_model.IntVar] = {}
-    discount_terms: list[cp_model.LinearExpr] = []
+    order_discount: list[list[cp_model.LinearExpr]] = [[] for _ in range(num_orders)]
     for ci, coupon in enumerate(coupons):
         members = _qualifying_products(products, coupon)
         for o in range(num_orders):
             u = model.NewBoolVar(f"use_{ci}_{o}")
             use[ci, o] = u
+            # A coupon can only be applied to an order that actually exists.
+            model.Add(u <= active[o])
             qualifying = sum(line[p] * x_in(p, o) for p in members)
             # If the coupon is applied here, the qualifying spend must reach the
             # threshold. (When u = 0 this constraint is not enforced.)
             model.Add(qualifying >= coupon.threshold_cents).OnlyEnforceIf(u)
-            discount_terms.append(coupon.discount_cents * u)
+            order_discount[o].append(coupon.discount_cents * u)
         model.AddAtMostOne(use[ci, o] for o in range(num_orders))
 
     # Shipping (flat per active order, free above an optional threshold).
-    shipping_terms: list[cp_model.LinearExpr] = []
     pays_shipping: list[cp_model.IntVar | int] = [0] * num_orders
+    order_shipping: list[cp_model.LinearExpr | int] = [0] * num_orders
     if settings.shipping_flat_cents > 0:
         free_threshold = settings.free_shipping_threshold_cents
         for o in range(num_orders):
@@ -151,21 +156,33 @@ def optimize(request: OptimizationRequest) -> OptimizationResult:
                     pays.Not()
                 )
                 pays_shipping[o] = pays
-            shipping_terms.append(settings.shipping_flat_cents * pays_shipping[o])
+            order_shipping[o] = settings.shipping_flat_cents * pays_shipping[o]
 
-    # Objective. The primary cost is shipping minus discounts (in cents). Among
-    # solutions of equal cost we prefer FEWER orders, since extra orders are pure
-    # hassle for the user. We encode this as a lexicographic objective: scale the
-    # primary cost by (n + 1) so a single cent of real saving always outweighs
-    # the order-count term (which is at most n). This never trades away a genuine
-    # saving — it only breaks ties.
-    primary_cost = sum(shipping_terms) - sum(discount_terms)
-    order_count = sum(active)
-    model.Minimize((n + 1) * primary_cost + order_count)
+    # Objective: minimise the TOTAL ACTUALLY PAID, then (as a strict tie-break)
+    # the number of orders.
+    #
+    # The amount paid for an order is max(0, subtotal + shipping - discounts):
+    # a coupon can never push an order below zero, and stacked coupons can never
+    # produce "cash back". Flooring at zero keeps the objective faithful to
+    # reality and stops pathological inputs from inventing impossible savings.
+    #
+    # We prefer fewer orders among equally-priced solutions by scaling the paid
+    # cost by (n + 1), so a single cent of real saving always outweighs the
+    # order-count term (which is at most n). This only breaks ties; it never
+    # trades away a genuine saving.
+    max_order_cost = total_subtotal + settings.shipping_flat_cents
+    paid = []
+    for o in range(num_orders):
+        cost = model.NewIntVar(0, max_order_cost, f"paid_{o}")
+        model.Add(cost >= subtotal[o] + order_shipping[o] - sum(order_discount[o]))
+        paid.append(cost)
+    model.Minimize((n + 1) * sum(paid) + sum(active))
 
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = settings.solver_time_limit_seconds
     solver.parameters.num_search_workers = 8
+    # Make results reproducible run-to-run for a given input.
+    solver.parameters.random_seed = 0
     status = solver.Solve(model)
 
     if status == cp_model.INFEASIBLE:
@@ -246,6 +263,11 @@ def _build_result(
             else 0
         )
 
+        # A discount can never reduce an order below zero (no cash back). Cap the
+        # effective discount at the order's value so the reported total matches
+        # the floored objective the solver optimised.
+        effective_discount = min(discount_total, order_subtotal + shipping_cents)
+
         orders.append(
             OrderResult(
                 index=len(orders) + 1,
@@ -253,7 +275,7 @@ def _build_result(
                 subtotal_cents=order_subtotal,
                 shipping_cents=shipping_cents,
                 applied_coupons=applied,
-                discount_cents=discount_total,
+                discount_cents=effective_discount,
             )
         )
 
@@ -314,7 +336,8 @@ def _single_order_baseline(request: OptimizationRequest) -> int | None:
         if qualifying >= coupon.threshold_cents:
             discount += coupon.discount_cents
 
-    return total + shipping - discount
+    # As in the engine, a single order is never paid below zero.
+    return max(0, total + shipping - discount)
 
 
 def _user_shares(request: OptimizationRequest) -> list[UserShare]:

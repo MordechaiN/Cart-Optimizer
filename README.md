@@ -37,12 +37,15 @@ You need [Docker](https://docs.docker.com/get-docker/) installed. Then, from the
 project folder:
 
 ```bash
-docker compose -f docker/docker-compose.yml up --build
+docker compose up --build
 ```
 
 Now open **http://localhost:8000** in your browser. That's it.
 
-To stop it, press `Ctrl+C` (or run `docker compose -f docker/docker-compose.yml down`).
+To stop it, press `Ctrl+C` (or run `docker compose down`).
+
+> Self-hosting with Portainer? See **[Deployment with Portainer](#deployment-with-portainer)**
+> below for a no-SSH, "Pull and redeploy" workflow.
 
 ---
 
@@ -59,6 +62,54 @@ You'll see the recommended orders, what to pay for each, the coupons used, your
 total savings, and a short explanation. A green **PROVEN OPTIMAL** badge means
 the answer is mathematically the best possible. (If a problem is ever too large
 to prove in time, it says so honestly instead of guessing.)
+
+---
+
+## Deployment with Portainer
+
+Cart Optimizer is designed to deploy as a **Portainer Stack straight from this
+Git repository**, so updating it never requires SSH or manual Docker commands.
+
+The primary `docker-compose.yml` lives at the repository root and builds the
+image from `docker/Dockerfile` using the repo root as the build context — which
+is exactly what Portainer expects.
+
+### One-time setup
+
+1. In Portainer, go to **Stacks → Add stack → Repository**.
+2. **Repository URL:** your fork/clone of this repo
+   (e.g. `https://github.com/mordechain/cart-optimizer`).
+3. **Repository reference:** `refs/heads/main`.
+4. **Compose path:** `docker-compose.yml` (the default — it's at the root).
+5. *(Optional)* Under **Environment variables**, set `APP_PORT` if you want a
+   host port other than `8000`.
+6. Click **Deploy the stack**. Portainer clones the repo, builds the image, and
+   starts the container. Open `http://<your-server>:8000`.
+
+### Updating (the everyday workflow)
+
+No SSH, no manual Docker commands:
+
+1. **Commit and push** your changes to GitHub (`main`).
+2. Open **Portainer → Stacks →** your stack.
+3. Click **Pull and redeploy**.
+
+Portainer pulls the latest commit, **rebuilds the image** from the Dockerfile,
+and recreates the container. (Optionally enable Portainer's **automatic updates**
+— polling or a webhook — to skip even step 2–3.)
+
+### Notes
+
+- The image is **self-contained and offline**: it bundles the optimization
+  engine and the Web UI (verified at build time). No internet access is needed
+  at runtime.
+- It runs **read-only, non-root**, with `no-new-privileges`. There is no
+  authentication in v0, so keep it on your trusted network or behind your own
+  reverse proxy / VPN.
+- Because the image is built on the server, the first deploy (and each rebuild)
+  downloads the solver and may take a few minutes.
+
+See [`docs/deployment.md`](docs/deployment.md) for more detail.
 
 ---
 

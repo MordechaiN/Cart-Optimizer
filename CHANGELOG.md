@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Deployment restructured for Portainer.** The primary `docker-compose.yml`
+  now lives at the repository root and builds from the root context
+  (`docker/Dockerfile`), so the repository deploys directly as a Portainer Stack
+  from Git with a "Pull and redeploy" workflow — no manual Docker commands. The
+  old `docker/docker-compose.yml` was removed.
+
+### Added
+- Dedicated **"Deployment with Portainer"** section in the README and an updated
+  deployment guide.
+- OCI image labels (title, description, source, license) on the runtime image.
+
+### Fixed
+- Packaging now bundles **all** web assets under `cart_optimizer/web/`
+  (including any future CSS/JS/template subdirectories), guaranteeing the runtime
+  image is self-contained. Verified by installing the built package and serving
+  the UI from it.
+
 ## [0.1.0] - 2026-06-27
 
 First working version (v0): a Dockerized application that computes the provably

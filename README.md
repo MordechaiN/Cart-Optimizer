@@ -67,6 +67,16 @@ No trial and error.
 - Free shipping threshold
 - Multiple currencies
 
+## 🤖 Smart guidance
+
+The app helps you as you type — no guesswork:
+
+- Shows how close you are to **unlocking each coupon**
+- Tells you **why a coupon won't apply** yet
+- Flags **possible duplicates** and **missing prices**
+- Warns when an item can't fit under your **customs limit**
+- Suggests a customs limit when you might need one
+
 ## 📊 Results
 
 - Cheapest possible order split
@@ -77,6 +87,8 @@ No trial and error.
 
 ## 🌍 User Experience
 
+- 🧭 One screen — no steps, nothing to learn
+- ⚡ Quick add (type a name, press Enter)
 - 🇬🇧 English
 - 🇮🇱 Hebrew (RTL)
 - 🌞 Light mode

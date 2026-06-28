@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-27
+
+A product-led redesign: the app now teaches itself and guides the user toward
+their goal, instead of presenting a form. Visual design, backend, API, i18n/RTL,
+and accessibility are unchanged. (See ADR-0008.)
+
+### Added
+- **Inviting empty state** that explains the value, shows benefits, offers an
+  example, and puts a quick-add front and centre.
+- **Quick-add** capture: type a name, price and store, press Enter to add; the
+  store stays sticky for the next item.
+- **Cart grouped by store** with **ghost-input** inline editing (fields read as
+  text, become editable on focus) and a quantity stepper — no spreadsheet feel.
+- **Real-time smart guidance:** coupon *unlock progress* ("you're X away"),
+  coupon qualification status, duplicate detection, missing/over-limit price
+  flags, impossible-constraint and customs suggestions — as a top insights strip
+  and inline badges.
+- **Plain-language coupons** with a live "$5 off your order over $50" summary and
+  status; "Avoid customs fees" toggle replaces technical limit wording.
+- **Results as the hero screen:** big "You pay" with a savings pill and
+  full-price → you-pay comparison, a customs/why note, an order **checklist** you
+  tick as you place each one, per-order coupon usage, and a localized
+  "why this is the best plan" explanation. Edit and "Optimize again" in place.
+- Currency moved to a compact header control; `Ctrl/Cmd+Enter` optimizes.
+
+### Changed
+- The previous wizard/dashboard editor framing is replaced by a goal-oriented,
+  self-teaching product flow.
+- Live updates are now surgical (item flags and coupon progress patch in place),
+  so typing and tabbing between fields never lose focus.
+
+### Removed
+- The group-order / per-person ("Users") mode is removed from the primary UI to
+  keep the common path simple. The backend still accepts an `owner` field, so it
+  can return later as an opt-in advanced mode (see ADR-0008).
+
 ## [0.3.0] - 2026-06-27
 
 Reworked the user experience from a multi-step wizard into a single-page
@@ -125,7 +161,8 @@ optimal way to split a shopping cart into multiple orders.
 - The container runs read-only with an in-memory `/tmp`, as a non-root user, and
   with `no-new-privileges`.
 
-[Unreleased]: https://github.com/mordechain/cart-optimizer/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/mordechain/cart-optimizer/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/mordechain/cart-optimizer/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mordechain/cart-optimizer/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/mordechain/cart-optimizer/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mordechain/cart-optimizer/releases/tag/v0.1.0

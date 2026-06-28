@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light" />
   <meta name="description" content="Find the mathematically optimal way to split your shopping cart into orders." />
   <title>Cart Optimizer</title>
-  <link rel="stylesheet" href="/static/styles.css?v=0.3.0" />
+  <link rel="stylesheet" href="/static/styles.css?v=0.4.0" />
 </head>
 <body>
   <header class="topbar">
@@ -25,6 +25,7 @@
     </div>
 
     <div class="controls">
+      <select id="currencySel" class="cur-select" aria-label="Currency"></select>
       <div class="menu-wrap">
         <button id="langBtn" class="btn-icon" aria-haspopup="true" aria-label="Language" data-i18n-aria="nav.language">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -50,7 +51,7 @@
   <div class="actionbar" id="actionbar"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="/static/i18n.js?v=0.3.0"></script>
-  <script src="/static/app.js?v=0.3.0"></script>
+  <script src="/static/i18n.js?v=0.4.0"></script>
+  <script src="/static/app.js?v=0.4.0"></script>
 </body>
 </html>
